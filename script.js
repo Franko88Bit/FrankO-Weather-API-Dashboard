@@ -3,6 +3,9 @@
 //function that collect user input and display in search history
 function add_result() {
   inputCity = document.getElementById("myInput").value;
+  if (inputCity == null || inputCity == "") {
+    alert("please input a city in the search bar");
+  }
   historyList = get_info();
   var searchCity = $("<div>");
   searchCity.attr('id', inputCity);
@@ -141,10 +144,10 @@ function get_info() {
 }
 
 //add info to local
-function add_info(n) {
+function add_info(cityName) {
   var addedList = get_info();
   if (historyList.includes(inputCity) === false) {
-    addedList.push(n);
+    addedList.push(cityName);
   }
   localStorage.setItem("city", JSON.stringify(addedList));
 }
@@ -154,12 +157,11 @@ function render_info() {
   var historyList = get_info();
   for (var i = 0; i < historyList.length; i++) {
     var inputCity = historyList[i];
-    var searchCity = $("<div>")
-    searchCity.attr('id', inputCity)
-    searchCity.text(inputCity)
-    searchCity.addClass("h4")
-
-    $(".history").append(searchCity)
+    var searchCity = $("<div>");
+    searchCity.attr('id', inputCity);
+    searchCity.text(inputCity);
+    searchCity.addClass("h4");
+    $(".history").append(searchCity);
   }
 }
 
