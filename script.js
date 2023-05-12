@@ -1,84 +1,166 @@
-// Wrap all code that interacts with the DOM in a call to jQuery to ensure that
-// the code isn't run until the browser has finished rendering all the elements
-// in the html. This is being achieved with the document .ready function
-$(document).ready(function () {
-  // TODO: Add a listener for click events on the save button. This code should
-  // use the id in the containing time-block as a key to save the user input in
-  // local storage. HINT: What does `this` reference in the click listener
-  // function? How can DOM traversal be used to get the "hour-x" id of the
-  // time-block containing the button that was clicked? How might the id be
-  // useful when saving the description in local storage?
-  //
-  // TODO: Add code to apply the past, present, or future class to each time
-  // block by comparing the id to the current hour. HINTS: How can the id
-  // attribute of each time-block be used to conditionally add or remove the
-  // past, present, and future classes? How can Day.js be used to get the
-  // current hour in 24-hour time?
-  //
-  // TODO: Add code to get any user input that was saved in localStorage and set
-  // the values of the corresponding textarea elements. HINT: How can the id
-  // attribute of each time-block be used to do this?
+// Note that the weather dashboard is case sensitive, so "Miami" will be a different search from "miami"
 
-  // Code to display current date in the top of the page using moment.js from cloudflare cdn in index.html script tag
-  $("#currentDay").text(moment().format("MMMM Do YYYY"));
-
-  // anytime a specific blue button per row is click, this function runs, note we have a total of 9 buttons aka 9 rows
-  $(".saveBtn").on("click", function () {
-    // these 2 variables are for the same row in the calendar app
-    var text_input_in_row_clicked = $(this).siblings(".description").val();
-    var time_in_row_clicked = $(this).parent().attr("id"); // note that 1pm is hour-13, the div id defined index.html, 2pm is hour-14
-    console.log(text_input_in_row_clicked);
-    console.log(time_in_row_clicked);
-    //set these 2 variables in local storage
-    localStorage.setItem(time_in_row_clicked, text_input_in_row_clicked);
-    alert("Saved this action successfully");
-  })
-
-  // load data from previous input sessions by the user
-  $("#hour-9 .description").val(localStorage.getItem("hour-9"));
-  $("#hour-10 .description").val(localStorage.getItem("hour-10"));
-  $("#hour-11 .description").val(localStorage.getItem("hour-11"));
-  $("#hour-12 .description").val(localStorage.getItem("hour-12"));
-  $("#hour-13 .description").val(localStorage.getItem("hour-13"));
-  $("#hour-14 .description").val(localStorage.getItem("hour-14"));
-  $("#hour-15 .description").val(localStorage.getItem("hour-15"));
-  $("#hour-16 .description").val(localStorage.getItem("hour-16"));
-  $("#hour-17 .description").val(localStorage.getItem("hour-17"));
-
-  // function here is to account for the red, green and gray color coding for each hour that changes every hour
-  function account_for_each_hour() {
-    // get current hour to compare against all 9 time rows in calendar from 9am to 5pm
-    var current_hour = parseInt(moment().hour());
-    // looping over each time rows to compare whether we are before, during or after each time row
-    $(".time-block").each(function () {
-      var time_row_hour = parseInt($(this).attr("id").split("hour")[1].substring(1));
-      /*console.log("time row hour is");
-      console.log(typeof(time_row_hour));
-      console.log(time_row_hour);
-      console.log("current hour is");
-      console.log(typeof(current_hour));
-      console.log(current_hour);*/
-      if (current_hour === time_row_hour) {
-        // this time row needs to be colored red
-        $(this).addClass("present");
-        $(this).removeClass("past");
-        $(this).removeClass("future");
-      }
-      else if (current_hour < time_row_hour) {
-        // this time row needs to be colored green
-        $(this).addClass("future");
-        $(this).removeClass("present");
-        $(this).removeClass("past");
-      }
-      else {
-        // this time row needs to be gray
-        $(this).addClass("past");
-        $(this).removeClass("present");
-        $(this).removeClass("future");
-      }
-    })
+//function that collect user input and display in search history
+function add_result() {
+  inputCity = document.getElementById("myInput").value;
+  historyList = get_info();
+  var searchCity = $("<div>");
+  searchCity.attr('id', inputCity);
+  searchCity.text(inputCity);
+  searchCity.addClass("h4");
+  if (historyList.includes(inputCity) === false) {
+    $(".history").append(searchCity);
   }
-  // call it here every time .ready runs 
-  // recall .ready runs AFTER after the browser has finished rendering all the elements in the htmls
-  account_for_each_hour();
-});
+  $(".subtitle").attr("style", "display:inline");
+  add_info(inputCity);
+}
+
+// get info for each city, call openweather API here
+function get_result() {
+  $(".five-day").empty();
+  $(".city").empty();
+  inputCity = document.getElementById("myInput").value;
+  var countryCode = 'US';
+  var cityCode = inputCity;
+  var geoLon = "";
+  var geoLat = "";
+  var cityName = $("<h>");
+  cityName.addClass("h3");
+  var temp = $("<div>");
+  var wind = $("<div>");
+  var humidity = $("<div>");
+  var uvIndex = $("<div>");
+  var icon = $("<img>");
+  icon.addClass("icon");
+  var dateTime = $("<div>");
+  $(".city").addClass("list-group");
+  $(".city").append(cityName);
+  $(".city").append(dateTime);
+  $(".city").append(icon);
+  $(".city").append(temp);
+  $(".city").append(wind);
+  $(".city").append(humidity);
+  $(".city").append(uvIndex);
+  // added my API key value to the URL before calling the openweather API
+  var geoUrl = "https://api.openweathermap.org/geo/1.0/direct?q=" + cityCode + "," + countryCode + "&limit=5&appid=232482c5538e28fbd83f43e762747982";
+  fetch(geoUrl)
+    //Convert the response into JSON. Lastly, we return the JSON-formatted response, as follows:
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (data) {
+      geoLon = data[0].lon;
+      geoLat = data[0].lat;
+
+      //use geoLat and geoLon to fetch the current weather
+      var weatherUrl = "https://api.openweathermap.org/data/2.5/onecall?lat=" + geoLat + "&lon=" + geoLon + "&exclude=minutely,hourly,alerts&units=imperial&appid=7d1b285353ccacd5326159e04cfab063";
+
+      fetch(weatherUrl)
+        .then(function (response) {
+          return response.json();
+        })
+        .then(function (data) {
+          weatherIcon = data.current.weather[0].icon;
+          imgSrc = "https://openweathermap.org/img/wn/" + weatherIcon + ".png";
+          icon.attr('src', imgSrc);
+          cityName.text(cityCode);
+          //translate utc to date
+          var date = new Date(data.current.dt * 1000);
+          dateTime.text("(" + (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + ")");
+          temp.text("Temperature: " + data.current.temp + " F");
+          humidity.text("Humidity: " + data.current.humidity + " %");
+          wind.text("Wind Speed: " + data.current.wind_speed + " MPH");  
+          var uvi = $("<div>");
+          uvIndex.text("UV Index: ");
+          uvi.text(data.current.uvi);
+          uvIndex.append(uvi);
+          uvIndex.addClass("d-flex");
+          if (data.current.uvi < 3) {
+            uvi.attr("style", "background-color:green; color:black; margin-left: 5px");
+          } else if (data.current.uvi < 6) {
+            uvi.attr("style", "background-color:yellow; color:black; margin-left: 5px");
+          } else if (data.current.uvi < 8) {
+            uvi.attr("style", "background-color:orange; color:black; margin-left: 5px");
+          } else if (data.current.uvi < 11) {
+            uvi.attr("style", "background-color:red; color:black; margin-left: 5px");
+          } else {
+            uvi.attr("style", "background-color:purple; color:black; margin-left: 5px");
+          }
+          // to show 5 day forcast for that selected city from user input
+          for (var i = 1; i < 6; i++) {
+            var blueContainer = $("<div>");
+            this["futureDate" + i] = $("<h>");
+            this["futureIcon" + i] = $("<img>");
+            this["futureTemp" + i] = $("<div>");
+            this["futureWind" + i] = $("<div>");
+            this["futureHumidity" + i] = $("<div>");
+            //translate utc to date
+            this["forecastDay" + i] = new Date(data.daily[i].dt * 1000);
+            (this["futureDate" + i]).text(((this["forecastDay" + i]).getMonth() + 1) + "/" + (this["forecastDay" + i]).getDate() + "/" + (this["forecastDay" + i]).getFullYear());
+            (this["futureTemp" + i]).text("Temperature: " + data.daily[i].temp.day + " F");
+            (this["futureWind" + i]).text("Wind: " + data.daily[i].wind_speed + " MPH");
+            (this["futureHumidity" + i]).text("Humidity: " + data.daily[i].humidity + " %");
+            (this["weatherIcon" + i]) = data.daily[i].weather[0].icon;
+            DateimgSrc = "https://openweathermap.org/img/wn/" + (this["weatherIcon" + i]) + ".png";
+            (this["futureIcon" + i]).attr('src', DateimgSrc);
+            $(".five-day").append(blueContainer)
+            blueContainer.append((this["futureDate" + i]));
+            blueContainer.append((this["futureIcon" + i]));
+            blueContainer.append((this["futureTemp" + i]));
+            blueContainer.append((this["futureWind" + i]));
+            blueContainer.append((this["futureHumidity" + i]));
+            blueContainer.addClass("weather-card");
+          }
+
+        })
+    })
+}
+
+//add event listener to search history item
+$(".history").on('click', function (event) {
+  event.preventDefault();
+  $(".subtitle").attr("style", "display:inline");
+  document.getElementById("myInput").value = event.target.id;
+  get_result();
+})
+
+//add event listner to search button
+document.getElementById("searchBtn").addEventListener("click", add_result);
+document.getElementById("searchBtn").addEventListener('click', get_result);
+
+//get local storage info
+function get_info() {
+  var currentList = localStorage.getItem("city");
+  if (currentList !== null) {
+    freshList = JSON.parse(currentList);
+    return freshList;
+  } else {
+    freshList = [];
+  }
+  return freshList;
+}
+
+//add info to local
+function add_info(n) {
+  var addedList = get_info();
+  if (historyList.includes(inputCity) === false) {
+    addedList.push(n);
+  }
+  localStorage.setItem("city", JSON.stringify(addedList));
+}
+
+//render history
+function render_info() {
+  var historyList = get_info();
+  for (var i = 0; i < historyList.length; i++) {
+    var inputCity = historyList[i];
+    var searchCity = $("<div>")
+    searchCity.attr('id', inputCity)
+    searchCity.text(inputCity)
+    searchCity.addClass("h4")
+
+    $(".history").append(searchCity)
+  }
+}
+
+render_info();

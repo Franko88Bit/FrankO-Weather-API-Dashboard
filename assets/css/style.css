@@ -1,9 +1,9 @@
 :root {
   --primary: lightgreen;
   --secondary: orange;
-  --tertiary: #79a3c8;
-  --light-dark:green;
-  --dark: green;
+  --tertiary: #fb7ec3;
+  --light-dark:rgb(42, 48, 42);
+  --dark: rgb(24, 225, 24);
   --border-radius: 0.3rem;
 }
 
